@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 const baseURL = 'https://restful-booker.herokuapp.com';
-const username = process.env.RESTFUL_BOOKER_USERNAME ?? 'admin';
-const password = process.env.RESTFUL_BOOKER_PASSWORD ?? 'password';
+const username = process.env.RESTFUL_BOOKER_USERNAME || 'admin';
+const password = process.env.RESTFUL_BOOKER_PASSWORD || 'password123';
 
 type Booking = {
   firstname: string;
