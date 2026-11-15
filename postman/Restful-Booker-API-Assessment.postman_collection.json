@@ -1,0 +1,140 @@
+{
+  "info": {
+    "_postman_id": "e2a1b5d0-0c11-4d8b-a2f0-6b2f2e8f4a10",
+    "name": "Junior QA Assessment - Restful Booker API",
+    "description": "Stateful positive workflow and negative endpoint scenarios. Run requests in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Positive - chained booking lifecycle",
+      "item": [
+        {
+          "name": "1. Auth - generate token",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('Token is returned', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+            "pm.environment.set('token', body.token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth"
+          }
+        },
+        {
+          "name": "2. Create - create booking and save ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('Booking ID is numeric', () => pm.expect(body.bookingid).to.be.a('number'));",
+            "pm.test('Booking object has expected field types', () => {",
+            "  pm.expect(body.booking.firstname).to.be.a('string');",
+            "  pm.expect(body.booking.lastname).to.be.a('string');",
+            "  pm.expect(body.booking.totalprice).to.be.a('number');",
+            "  pm.expect(body.booking.depositpaid).to.be.a('boolean');",
+            "  pm.expect(body.booking.bookingdates.checkin).to.be.a('string');",
+            "  pm.expect(body.booking.bookingdates.checkout).to.be.a('string');",
+            "});",
+            "pm.environment.set('bookingId', body.bookingid);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"{{firstName}}\",\n  \"lastname\": \"{{lastName}}-{{$timestamp}}\",\n  \"totalprice\": 250,\n  \"depositpaid\": true,\n  \"bookingdates\": { \"checkin\": \"2027-01-10\", \"checkout\": \"2027-01-15\" },\n  \"additionalneeds\": \"Breakfast\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/booking"
+          }
+        },
+        {
+          "name": "3. Update - update created booking",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('Updated values are returned', () => {",
+            "  pm.expect(body.firstname).to.eql('UpdatedQA');",
+            "  pm.expect(body.additionalneeds).to.eql('Vegetarian breakfast');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" }, { "key": "Cookie", "value": "token={{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"UpdatedQA\",\n  \"lastname\": \"UpdatedAssessment\",\n  \"totalprice\": 275,\n  \"depositpaid\": true,\n  \"bookingdates\": { \"checkin\": \"2027-01-10\", \"checkout\": \"2027-01-16\" },\n  \"additionalneeds\": \"Vegetarian breakfast\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/booking/{{bookingId}}"
+          }
+        },
+        {
+          "name": "4. Verify - confirm update persisted",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('Persisted data matches update', () => {",
+            "  pm.expect(body.firstname).to.eql('UpdatedQA');",
+            "  pm.expect(body.additionalneeds).to.eql('Vegetarian breakfast');",
+            "  pm.expect(body.bookingdates.checkout).to.eql('2027-01-16');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/booking/{{bookingId}}"
+          }
+        },
+        {
+          "name": "5. Delete - clean up created booking",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+            "pm.environment.unset('bookingId');"
+          ]}}],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Cookie", "value": "token={{token}}" }],
+            "url": "{{baseUrl}}/booking/{{bookingId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Negative - endpoint validation",
+      "item": [
+        {
+          "name": "Auth - invalid credentials do not issue token",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const body = pm.response.json();",
+            "pm.test('No token is issued', () => { pm.expect(body).to.have.property('reason'); pm.expect(body).not.to.have.property('token'); });"
+          ]}}],
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"username\": \"bad-user\",\n  \"password\": \"bad-password\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/auth" }
+        },
+        {
+          "name": "Create - empty booking payload is rejected",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Empty payload is not accepted', () => pm.expect(pm.response.code).not.to.eql(200));"
+          ]}}],
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/booking" }
+        },
+        {
+          "name": "Update - missing token is forbidden",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+          ]}}],
+          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"firstname\": \"Unauthorized\",\n  \"lastname\": \"Attempt\",\n  \"totalprice\": 10,\n  \"depositpaid\": false,\n  \"bookingdates\": { \"checkin\": \"2027-01-10\", \"checkout\": \"2027-01-11\" },\n  \"additionalneeds\": \"None\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/booking/1" }
+        },
+        {
+          "name": "Verify - unknown booking ID returns 404",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+          ]}}],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/booking/999999999" }
+        },
+        {
+          "name": "Delete - missing token is forbidden",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('HTTP 403', () => pm.response.to.have.status(403));"
+          ]}}],
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/booking/1" }
+        }
+      ]
+    }
+  ]
+}
