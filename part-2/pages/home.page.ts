@@ -9,10 +9,14 @@ export class HomePage {
     await expect(this.coffeeTitle('Espresso')).toBeVisible();
   }
 
+  // Each coffee is rendered as an li containing its own .cup-body.
+  // Anchor the heading to that product card to avoid hidden preview text
+  // and similarly named products such as Espresso Macchiato.
   coffeeTitle(productName: string): Locator {
-    // The product name is an exact text node inside its h4; avoid matching
-    // similarly named coffees such as "Espresso Macchiato".
-    return this.page.getByText(productName, { exact: true }).locator('xpath=..');
+    const productCard = this.page.locator('li').filter({
+      has: this.page.locator(`.cup-body[aria-label="${productName}"]`),
+    });
+    return productCard.locator('h4');
   }
 
   coffeeIcon(productName: string): Locator {
