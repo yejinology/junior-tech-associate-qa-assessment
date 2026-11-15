@@ -4,17 +4,16 @@ import { coffeeData, createCustomer } from '../data/coffee.data';
 test.describe('Coffee Cart checkout', () => {
   test('customer can add a product and complete checkout', async ({ homePage, cartPage, page }) => {
     await homePage.addProduct(coffeeData.primaryProduct);
-    await homePage.openCart();
 
-    // Scope to CartPage's .list container. The Pay component also renders
-    // a preview row with .list-item, so a page-wide locator is ambiguous.
-    const cartItem = page.locator('.list > ul > li.list-item')
+    // Coffee Cart checkout is a payment modal on the home page, not a
+    // separate /cart route. Confirm the product in the cart preview first.
+    const cartItem = page.locator('.cart-preview > li.list-item')
       .filter({ hasText: coffeeData.primaryProduct });
     await expect(cartItem).toHaveCount(1);
     await expect(cartItem).toBeVisible();
 
     await cartPage.proceedToCheckout();
     await cartPage.submitPaymentDetails(createCustomer());
-    await cartPage.expectSuccessfulOrder();
+    await expect(page.getByText(/thanks for your purchase/i)).toBeVisible();
   });
 });
