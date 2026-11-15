@@ -6,8 +6,11 @@ test.describe('Coffee Cart checkout', () => {
     await homePage.addProduct(coffeeData.primaryProduct);
     await homePage.openCart();
 
-    const cartItem = page.locator('.list-item')
+    // Scope to CartPage's .list container. The Pay component also renders
+    // a preview row with .list-item, so a page-wide locator is ambiguous.
+    const cartItem = page.locator('.list > ul > li.list-item')
       .filter({ hasText: coffeeData.primaryProduct });
+    await expect(cartItem).toHaveCount(1);
     await expect(cartItem).toBeVisible();
 
     await cartPage.proceedToCheckout();
