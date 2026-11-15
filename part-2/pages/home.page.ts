@@ -10,7 +10,9 @@ export class HomePage {
   }
 
   coffeeTitle(productName: string): Locator {
-    return this.page.locator('h4').filter({ hasText: productName }).first();
+    // The product name is an exact text node inside its h4; avoid matching
+    // similarly named coffees such as "Espresso Macchiato".
+    return this.page.getByText(productName, { exact: true }).locator('xpath=..');
   }
 
   coffeeIcon(productName: string): Locator {
