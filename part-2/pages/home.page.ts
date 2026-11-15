@@ -6,48 +6,41 @@ export class HomePage {
   async goto() {
     await this.page.goto('/');
     await expect(this.page).toHaveURL(/coffee-cart\.app/);
+    await expect(this.coffeeTitle('Espresso')).toBeVisible();
   }
 
-  private addButton(productName: string): Locator {
-    const productTitle = this.page.getByText(productName, { exact: true }).first();
-    const productCard = productTitle.locator('xpath=ancestor::*[.//button][1]');
-    return productCard.getByRole('button', { name: /add to cart/i });
+  coffeeTitle(productName: string): Locator {
+    return this.page.locator('h4').filter({ hasText: productName }).first();
+  }
+
+  coffeeIcon(productName: string): Locator {
+    return this.page.locator(`.cup-body[aria-label="${productName}"]`);
   }
 
   async addProduct(productName: string, quantity = 1) {
-    const button = this.addButton(productName);
-    await expect(button).toBeVisible();
+    const cup = this.coffeeIcon(productName);
+    await expect(cup).toBeVisible();
+
     for (let index = 0; index < quantity; index += 1) {
-      await button.click();
+      await cup.click();
       await this.handlePromoIfVisible();
     }
   }
 
   async handlePromoIfVisible() {
-    const dialog = this.page.getByRole('dialog');
-    if (!(await dialog.isVisible().catch(() => false))) return;
+    const promo = this.page.locator('.promo');
+    if (!(await promo.isVisible().catch(() => false))) return;
 
-    const dismiss = dialog.getByRole('button', {
-      name: /no thanks|not now|skip|close|continue/i,
-    }).first();
-
-    if (await dismiss.isVisible().catch(() => false)) {
-      await dismiss.click();
-      await expect(dialog).toBeHidden();
-    } else {
-      await this.page.keyboard.press('Escape');
-      await expect(dialog).toBeHidden();
-    }
+    const skip = promo.getByRole('button', { name: /nah, i'll skip/i });
+    await expect(skip).toBeVisible();
+    await skip.click();
+    await expect(promo).toBeHidden();
   }
 
   async openCart() {
-    const control = this.page.getByRole('button', { name: /cart/i })
-      .or(this.page.getByRole('link', { name: /cart/i })).first();
+    const control = this.page.getByRole('link', { name: /cart/i });
     await expect(control).toBeVisible();
     await control.click();
-  }
-
-  coffeeTitle(productName: string): Locator {
-    return this.page.getByRole('heading', { name: productName, exact: true });
+    await expect(this.page).toHaveURL(/\/cart/);
   }
 }
