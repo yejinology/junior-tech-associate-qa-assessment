@@ -9,9 +9,9 @@ export class HomePage {
   }
 
   private addButton(productName: string): Locator {
-    return this.page.getByRole('button', {
-      name: new RegExp(`add one ${productName}`, 'i'),
-    });
+    const productTitle = this.page.getByText(productName, { exact: true }).first();
+    const productCard = productTitle.locator('xpath=ancestor::*[.//button][1]');
+    return productCard.getByRole('button', { name: /add to cart/i });
   }
 
   async addProduct(productName: string, quantity = 1) {
