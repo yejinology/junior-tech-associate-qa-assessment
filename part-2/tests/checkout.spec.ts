@@ -6,8 +6,9 @@ test.describe('Coffee Cart checkout', () => {
     await homePage.addProduct(coffeeData.primaryProduct);
     await homePage.openCart();
 
-    await expect(page.getByText(coffeeData.primaryProduct, { exact: false }).first())
-      .toBeVisible();
+    const cartItem = page.locator('.list-item')
+      .filter({ hasText: coffeeData.primaryProduct });
+    await expect(cartItem).toBeVisible();
 
     await cartPage.proceedToCheckout();
     await cartPage.submitPaymentDetails(createCustomer());
