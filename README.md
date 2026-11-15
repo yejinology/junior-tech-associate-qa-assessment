@@ -22,7 +22,7 @@ npm run test:api
 npm test
 ```
 
-The API suite uses the public demo credentials admin/password by default. Override with RESTFUL_BOOKER_USERNAME and RESTFUL_BOOKER_PASSWORD if needed.
+The API suite uses the public demo credentials admin/password123 by default. Override with RESTFUL_BOOKER_USERNAME and RESTFUL_BOOKER_PASSWORD if needed.
 
 ## Postman
 Import postman/Restful-Booker-API-Assessment.postman_collection.json and postman/Restful-Booker-Local.postman_environment.json. Select the environment and run the collection in order. The positive flow creates, updates, verifies, and deletes its booking. Negative scenarios cover all five endpoints.
